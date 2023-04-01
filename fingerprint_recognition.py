@@ -46,7 +46,7 @@ class Recognition:
 	def enhancement(self):
 		or_count = 8
 		gabor_bank = [gabor_kernel(self.ridge_period, o) for o in np.arange(0, np.pi, np.pi/or_count)]
-		nf = 255-self.fingerprint
+		nf = 255 - self.fingerprint
 		all_filtered = np.array([cv.filter2D(nf, cv.CV_32F, f) for f in gabor_bank])
 		y_coords, x_coords = np.indices(self.fingerprint.shape)
 		orientation_idx = np.round(((self.orientations % np.pi) / np.pi) * or_count).astype(np.int32) % or_count
@@ -153,6 +153,32 @@ class Recognition:
 		self.local_structure()
 
 
+def fingerprint_Matcher(fingerprint1, fingerprint2):
+    fp1 = Recognition(fingerprint1)
+    fp1.analyze()
+    fp2 = Recognition(fingerprint2)
+    fp2.analyze()
+    
+    tf1 , tm1, tls1 = fp1.fingerprint , fp1.valid_minutiae , fp1.local_structures
+    tf2 , tm2, tls2 = fp2.fingerprint , fp2.valid_minutiae , fp2.local_structures
+    
+    dists = np.sqrt(np.sum((tls1[:,np.newaxis,:] - tls2)**2, -1))
+    dists /= (np.sqrt(np.sum(tls1**2, 1))[:,np.newaxis] + np.sqrt(np.sum(tls2**2, 1)))
+    num_p = 5 
+    pairs = np.unravel_index(np.argpartition(dists, num_p, None)[:num_p], dists.shape)
+    score = 1 - np.mean(dists[pairs[0], pairs[1]]) 
+    print(f'Comparison score: {score:.2f}')
+    
+    match_minutiae_image = draw_match_pairs(tf1, tm1, tls1, tf2, tm2, tls2, fp1.ref_cell_coords, pairs,len(pairs[0])-1 , False)
+    
+    cv.imshow("result",match_minutiae_image)
+    cv.waitKey()
+    if score > 0.65:
+        # print("Matched!")
+        return score , True , match_minutiae_image
+    else:
+        # print("Unmatched!")
+        return score , False , match_minutiae_image
 
 	
 	

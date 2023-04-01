@@ -1,2 +1,4 @@
 # matches any files and directories with the name SOCOFing
 SOCOFing
+.vscode
+__pycache__
