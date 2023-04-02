@@ -8,20 +8,20 @@ def debug_printout(x):
 
 class Sequencing():
 	real_fingerprint = os.listdir("SOCOFing/Real")
-	real_fingerprint.sort(key=lambda f: int(f.split('__')[0]))
+	real_fingerprint.sort(key=lambda fingerprint : int(fingerprint.split('__')[0]))
 	
 	altered_easy_fingerprint =  os.listdir("SOCOFing/Altered/Altered-Easy")
-	altered_easy_fingerprint.sort(key=lambda f: int(f.split('__')[0]))
+	altered_easy_fingerprint.sort(key=lambda fingerprint : int(fingerprint.split('__')[0]))
 	
 	altered_medium_fingerprint =  os.listdir("SOCOFing/Altered/Altered-Medium")
-	altered_medium_fingerprint.sort(key=lambda f: int(f.split('__')[0]))
+	altered_medium_fingerprint.sort(key=lambda fingerprint : int(fingerprint.split('__')[0]))
 	
 	altered_hard_fingerprint =  os.listdir("SOCOFing/Altered/Altered-Hard")
-	altered_hard_fingerprint.sort(key=lambda f: int(f.split('__')[0]))
+	altered_hard_fingerprint.sort(key=lambda fingerprint : int(fingerprint.split('__')[0]))
 	
 	def __init__(self, user_id):
 		self.user_ID = user_id
-		self.user_fingerprint = Sequencing.real_fingerprint[(self.user_ID-1)*10:(self.user_ID-1)*10+10]
+		self.user_fingerprint = list(filter(lambda fingerprint : int(fingerprint.split('__')[0]) == self.user_ID , Sequencing.real_fingerprint ))
 		self.sequence = []
 
 	def print_fingerprint(self , fingerprint):
@@ -37,15 +37,17 @@ class Sequencing():
 	def get_altered_user_fingerprint(self , difficult):
 		match difficult:
 			case 0: # for debugging
-				fingerprint = Sequencing.real_fingerprint[(self.user_ID-1)*10:(self.user_ID-1)*10+10] 
+				fingerprints = list(filter(lambda fingerprint : int(fingerprint.split('__')[0]) == self.user_ID , Sequencing.real_fingerprint ))
+				return fingerprints
 			case 1:
-				fingerprint = Sequencing.altered_easy_fingerprint[(self.user_ID-1)*30:(self.user_ID-1)*30+30]	
+				fingerprints = list(filter(lambda fingerprint : int(fingerprint.split('__')[0]) == self.user_ID , Sequencing.altered_easy_fingerprint ))
 			case 2:
-				fingerprint = Sequencing.altered_medium_fingerprint[(self.user_ID-1)*30:(self.user_ID-1)*30+30]
+				fingerprints = list(filter(lambda fingerprint : int(fingerprint.split('__')[0]) == self.user_ID , Sequencing.altered_medium_fingerprint))
 			case 3:
-				fingerprint = Sequencing.altered_hard_fingerprint[(self.user_ID-1)*30:(self.user_ID-1)*30+30] 
+				fingerprints = list(filter(lambda fingerprint : int(fingerprint.split('__')[0]) == self.user_ID , Sequencing.altered_hard_fingerprint ))
 		
-		return fingerprint
+
+		return fingerprints
 		
 
 	def get_sequence(self):

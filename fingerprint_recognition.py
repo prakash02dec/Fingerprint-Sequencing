@@ -175,10 +175,10 @@ def fingerprint_Matcher(fingerprint1, fingerprint2):
     cv.waitKey()
     if score > 0.65:
         # print("Matched!")
-        return score , True , match_minutiae_image
+        return True , score , match_minutiae_image
     else:
         # print("Unmatched!")
-        return score , False , match_minutiae_image
+        return False , score , match_minutiae_image
 
 	
 	
