@@ -24,35 +24,42 @@ class Sequencing():
 		self.user_fingerprint = Sequencing.real_fingerprint[(self.user_ID-1)*10:(self.user_ID-1)*10+10]
 		self.sequence = []
 
-	def get_user_fingerprint(self,):
+	def print_fingerprint(self , fingerprint):
 		print(f"User {self.user_ID} Stored fingerprint are following : ")
-		for finger in self.user_fingerprint :
-			print(" " ,finger.split(".")[0] , "\n")
-	
-	def get_sequence(self):
-		print("Entered finger sequence : " ,self.sequence)
+		i=1
+		for finger in fingerprint :
+			print(f"{i}." ,finger.split(".")[0] )
+			i = i+1
 
+	def get_user_fingerprint(self,):
+		return self.user_fingerprint
+	
+	def get_altered_user_fingerprint(self , difficult):
+		match difficult:
+			case 0: # for debugging
+				fingerprint = Sequencing.real_fingerprint[(self.user_ID-1)*10:(self.user_ID-1)*10+10] 
+			case 1:
+				fingerprint = Sequencing.altered_easy_fingerprint[(self.user_ID-1)*30:(self.user_ID-1)*30+30]	
+			case 2:
+				fingerprint = Sequencing.altered_medium_fingerprint[(self.user_ID-1)*30:(self.user_ID-1)*30+30]
+			case 3:
+				fingerprint = Sequencing.altered_hard_fingerprint[(self.user_ID-1)*30:(self.user_ID-1)*30+30] 
+		
+		return fingerprint
+		
+
+	def get_sequence(self):
+		return self.sequence
+	
 	def create_sequence(self):
 		self.sequence = [ self.user_fingerprint[int(x)-1] for x in input(" Enter the User's Fingerprint's serial number in order which you want to Register as Sequence : ").split()]
 		return True
-	
 
-	def authenticate_sequence(self , difficult ,):
-		altered_user_fingerprint = []
-		match difficult:
-			case 0: # for debugging
-				altered_user_fingerprint = Sequencing.real_fingerprint[(self.user_ID-1)*10:(self.user_ID-1)*10+10]  
-			case 1:
-				altered_user_fingerprint = Sequencing.altered_easy_fingerprint[(self.user_ID-1)*30:(self.user_ID-1)*30+30]
-			case 2:
-				altered_user_fingerprint = Sequencing.altered_medium_fingerprint[(self.user_ID-1)*30:(self.user_ID-1)*30+30]
-			case 3:
-				altered_user_fingerprint = Sequencing.altered_hard_fingerprint[(self.user_ID-1)*30:(self.user_ID-1)*30+30] 
-		
-		sequence = [ altered_user_fingerprint[int(x)-1] for x in input(" Enter the fingerprint'serial no of user in order which you want to register as Sequence : ").split()]
+
+	def authenticate_sequence(self , difficult ,sequence ):
+		altered_user_fingerprint = self.get_altered_user_fingerprint(difficult)
 		
 		if len(sequence) != len(self.sequence):
-			print("Access Denied. Please try again")
 			return False , 0
 		
 		matching_score = []
@@ -68,49 +75,117 @@ class Sequencing():
 
 			score , match_status , match_minutiae_image  = fingerprint_Matcher('SOCOFing/Real/' + self.sequence[fingerprint] , altered_difficulty_folder_loc[ difficult ] + sequence[fingerprint] )
 			
+
 			if match_status : 
 				matching_score.append(score)
 			else : 
 				return False , np.array(matching_score).mean()
 		
 		return True , np.array(matching_score).mean()
-		
 
-def menu():
+
+def is_valid_user_id(user_id):
+	if user_id > 0 and user_id <= 600 :
+		return True
+	return False
+
+def find_user(users , user_id):
+	for user in users:
+		if user.user_ID == user_id :
+			return user
+
+def is_user_exist(users , user_id):
+	if is_valid_user_id(user_id):
+		for user in users:
+			if user.user_ID == user_id :
+				return True
+	return False
+
+def register_user(users):
+
 	print("=========================================================================================")
-	print("========================CREATING FINGERPRINT SEQUENCE PASSWORD ==========================")
-	user_id = int(input("Enter user_id within range from 1 to 600 : "))
+	print("================================ REGISTRATION PORTAL ====================================")
+
+	user_id = -1 
+	while is_user_exist(users , user_id) or not is_valid_user_id(user_id):
+		user_id = int(input("Enter user_id within range from 1 to 600 : "))
+		if not is_valid_user_id(user_id):
+			print("Invalid User ID")
+		elif is_user_exist(users , user_id):
+			print("Already exist")
+
 	user = Sequencing(user_id)
 	print("Scan the Fingers one by one in order to create Fingerprint Sequencing Password")
-	user.get_user_fingerprint()
+	user.print_fingerprint(user.get_user_fingerprint())
 	user.create_sequence()
+	users.append(user)
 
+def authentication(users):
 	print("=========================================================================================")
-	print("======================================AUTHENTICATION=====================================")
+	print("================================ AUTHENTICATION PORTAL ==================================")
 	
 	print("Enter the difficult")
 	print("1. Easy")
 	print("2. Medium")
 	print("3 .Hard")
 	difficult = int(input(" Choose : "))
-	
 
-	scanned_finger = []
-	
-	user_id = int(input("Enter user_id from range of 1 to 600 : "))
-	while user.user_ID != user_id :
-		user_id = int(input("Enter user_id from range of 1 to 600 : "))
+	user_id = -1 
+	while not is_user_exist(users , user_id) or not is_valid_user_id(user_id):
+		user_id = int(input("Enter user_id within range from 1 to 600 : "))
+		if not is_valid_user_id(user_id):
+			print("Invalid User ID")
+		elif not is_user_exist(users , user_id):
+			print("Does not exist")
+			return
+
+	user = find_user(users , user_id)
     
 	print("Scan the User's Fingerprint in the same Sequence order to Access System")
-	user.get_user_fingerprint()
-	
-	access = user.authenticate_sequence(difficult)
+	user.print_fingerprint( user.get_altered_user_fingerprint(difficult) ) 
+	scanned_fingers = [ user.get_altered_user_fingerprint(difficult)[int(x)-1] for x in input(" Enter the registered fingerprint'sequence  : ").split() ]
+
+	access , score = user.authenticate_sequence(difficult , scanned_fingers)
 	
 	if access :
 		print("Access Success")
+		print(f"Overall Match Score : {score}")
 	else :
-		print("Access Denied")
+		print("Access Denied. Please try again")
 
 
-menu()
-# fingerprint_Matcher('SOCOFing/Altered/Altered-Hard/151__M_Right_index_finger_Obl.BMP', 'SOCOFing/Real/151__M_Right_index_finger.BMP')
+def menu(users):
+	while True:
+		
+		print("=========================================================================================")
+		print("============================ FINGERPRINT SEQUENCING PORTAL ==============================")
+		print("Choose the option")
+		print("1. Register user")
+		print("2. Authentication")
+		print("3. Exit")
+		
+		option = int(input(" Enter : "))
+		
+		match option :
+			case 1: 
+				register_user(users)
+			case 2:
+				authentication(users)
+			case 3:
+				exit()
+	
+	
+
+def main():
+	# debug_printout( Sequencing.altered_easy_fingerprint )
+	# user = Sequencing(1)
+	# debug_printout( user.get_altered_user_fingerprint(1))
+	# debug_printout( Sequencing.altered_medium_fingerprint )
+	# debug_printout( Sequencing.altered_hard_fingerprint )
+	users = []
+	menu(users)
+	# fingerprint_Matcher('SOCOFing/Altered/Altered-Hard/151__M_Right_index_finger_Obl.BMP', 'SOCOFing/Real/151__M_Right_index_finger.BMP')
+
+
+if __name__ == '__main__':
+	main()
