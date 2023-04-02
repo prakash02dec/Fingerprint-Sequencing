@@ -171,14 +171,12 @@ def fingerprint_Matcher(fingerprint1, fingerprint2):
     
     match_minutiae_image = draw_match_pairs(tf1, tm1, tls1, tf2, tm2, tls2, fp1.ref_cell_coords, pairs,len(pairs[0])-1 , False)
     
-    cv.imshow("result",match_minutiae_image)
-    cv.waitKey()
-    if score > 0.65:
+	if score > 0.65:
         # print("Matched!")
-        return True , score , match_minutiae_image
+        return  score , True , match_minutiae_image
     else:
         # print("Unmatched!")
-        return False , score , match_minutiae_image
+        return  score , False , match_minutiae_image
 
 	
 	

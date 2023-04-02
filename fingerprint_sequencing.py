@@ -58,14 +58,12 @@ class Sequencing():
 		return True
 
 
-	def authenticate_sequence(self , difficult ,sequence ):
-		altered_user_fingerprint = self.get_altered_user_fingerprint(difficult)
-		
+	def authenticate_sequence(self , difficult ,sequence ):	
 		if len(sequence) != len(self.sequence):
 			return False , 0
 		
-		matching_score = []
-			
+		matching_score = []	
+		
 		for fingerprint in range(len(self.sequence)):
 			
 			altered_difficulty_folder_loc = {
@@ -74,10 +72,14 @@ class Sequencing():
 										2 : "SOCOFing/Altered/Altered-Medium/" ,
 										3 :	"SOCOFing/Altered/Altered-Hard/" ,
 										}
-
-			score , match_status , match_minutiae_image  = fingerprint_Matcher('SOCOFing/Real/' + self.sequence[fingerprint] , altered_difficulty_folder_loc[ difficult ] + sequence[fingerprint] )
+			try:
+				score , match_status , match_minutiae_image  = fingerprint_Matcher('SOCOFing/Real/' + self.sequence[fingerprint] , altered_difficulty_folder_loc[ difficult ] + sequence[fingerprint] )
+			except ValueError:
+				return False , 0 , 0
 			
-
+			match_minutiae_image = cv.putText(match_minutiae_image , str(fingerprint+1) , (0,21) ,cv.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 2, cv.LINE_AA)
+			cv.imshow("match_minutiae_image" ,match_minutiae_image)
+			cv.waitKey()
 			if match_status : 
 				matching_score.append(score)
 			else : 
@@ -129,10 +131,11 @@ def authentication(users):
 	print("Enter the difficult")
 	print("1. Easy")
 	print("2. Medium")
-	print("3 .Hard")
+	print("3. Hard")
 	difficult = int(input(" Choose : "))
 
 	user_id = -1 
+	
 	while not is_user_exist(users , user_id) or not is_valid_user_id(user_id):
 		user_id = int(input("Enter user_id within range from 1 to 600 : "))
 		if not is_valid_user_id(user_id):
@@ -145,10 +148,11 @@ def authentication(users):
     
 	print("Scan the User's Fingerprint in the same Sequence order to Access System")
 	user.print_fingerprint( user.get_altered_user_fingerprint(difficult) ) 
-	scanned_fingers = [ user.get_altered_user_fingerprint(difficult)[int(x)-1] for x in input(" Enter the registered fingerprint'sequence  : ").split() ]
+	scanned_fingers = [ user.get_altered_user_fingerprint(difficult)[int(x)-1] for x in input(" Enter the registered fingerprint's sequence  : ").split() ]
 
 	access , score = user.authenticate_sequence(difficult , scanned_fingers)
-	
+	debug_printout(access )
+	debug_printout(score)
 	if access :
 		print("Access Success")
 		print(f"Overall Match Score : {score}")
@@ -176,7 +180,7 @@ def menu(users):
 			case 3:
 				exit()
 	
-	
+
 
 def main():
 	# debug_printout( Sequencing.altered_easy_fingerprint )
@@ -188,6 +192,14 @@ def main():
 	menu(users)
 	# fingerprint_Matcher('SOCOFing/Altered/Altered-Hard/151__M_Right_index_finger_Obl.BMP', 'SOCOFing/Real/151__M_Right_index_finger.BMP')
 
-
+# 546 , 
+# strip([chars])
 if __name__ == '__main__':
 	main()
+
+
+# x , y ,img = fingerprint_Matcher('SOCOFing/Altered/Altered-Hard/151__M_Right_index_finger_Obl.BMP', 'SOCOFing/Real/151__M_Right_index_finger.BMP')
+
+# img = cv.putText(img,str("1"),(0,21) ,cv.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 2, cv.LINE_AA)
+# cv.imshow("1" ,img)
+# cv.waitKey()
