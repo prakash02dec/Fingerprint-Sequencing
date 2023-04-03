@@ -159,7 +159,9 @@ def authentication(users):
 	else :
 		print("Access Denied. Please try again")
 
-
+def alternate():
+	print("Please choose a valid option from above")
+	
 def menu(users):
 	while True:
 		
@@ -179,7 +181,8 @@ def menu(users):
 				authentication(users)
 			case 3:
 				exit()
-	
+	                case _:
+				alternate()
 
 
 def main():
