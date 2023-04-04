@@ -27,7 +27,6 @@ class Recognition:
 		self.orientations = (cv.phase(gxx_gyy, -gxy2) + np.pi) / 2 # '-' to adjust for y axis direction
 		sum_gxx_gyy = gxx + gyy
 		self.strengths = np.divide(cv.sqrt((gxx_gyy**2 + gxy2**2)), sum_gxx_gyy, out=np.zeros_like(gxx), where=sum_gxx_gyy!=0)
-		# cv.imshow()
 	
 	def local_ridge_frequency(self):
 		region = self.fingerprint[10:90,80:130]
@@ -164,14 +163,13 @@ def fingerprint_Matcher(fingerprint1, fingerprint2):
     
     dists = np.sqrt(np.sum((tls1[:,np.newaxis,:] - tls2)**2, -1))
     dists /= (np.sqrt(np.sum(tls1**2, 1))[:,np.newaxis] + np.sqrt(np.sum(tls2**2, 1)))
-    num_p = 5 
+    num_p = 17
     pairs = np.unravel_index(np.argpartition(dists, num_p, None)[:num_p], dists.shape)
     score = 1 - np.mean(dists[pairs[0], pairs[1]]) 
     print(f'Comparison score: {score:.2f}')
     
     match_minutiae_image = draw_match_pairs(tf1, tm1, tls1, tf2, tm2, tls2, fp1.ref_cell_coords, pairs,len(pairs[0])-1 , False)
-    
-	if score > 0.65:
+    if score > 0.40:
         # print("Matched!")
         return  score , True , match_minutiae_image
     else:

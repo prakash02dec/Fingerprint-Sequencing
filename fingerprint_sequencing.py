@@ -6,6 +6,18 @@ import os
 def debug_printout(x):
 	print("Debug : " , x)
 
+# input exceptional handling
+def __input (string):
+	x = 0
+	while True:
+		try:
+			x = int(input(string).strip())
+			break
+		except ValueError:
+			print (" Invalid!, Enter only digit.")
+			continue
+	return x
+
 class Sequencing():
 	real_fingerprint = os.listdir("SOCOFing/Real")
 	real_fingerprint.sort(key=lambda fingerprint : int(fingerprint.split('__')[0]))
@@ -53,12 +65,12 @@ class Sequencing():
 	def get_sequence(self):
 		return self.sequence
 	
-	def create_sequence(self):
-		self.sequence = [ self.user_fingerprint[int(x)-1] for x in input(" Enter the User's Fingerprint's serial number in order which you want to Register as Sequence : ").split()]
+	def create_sequence(self , fingers ):
+		self.sequence = [ self.user_fingerprint[int(x)-1] for x in fingers ]
 		return True
 
 
-	def authenticate_sequence(self , difficult ,sequence ):	
+	def authenticate_sequence(self ,sequence , difficult=1):	
 		if len(sequence) != len(self.sequence):
 			return False , 0
 		
@@ -75,11 +87,13 @@ class Sequencing():
 			try:
 				score , match_status , match_minutiae_image  = fingerprint_Matcher('SOCOFing/Real/' + self.sequence[fingerprint] , altered_difficulty_folder_loc[ difficult ] + sequence[fingerprint] )
 			except ValueError:
-				return False , 0 , 0
+				cv.destroyAllWindows()
+				return False , 0 
 			
 			match_minutiae_image = cv.putText(match_minutiae_image , str(fingerprint+1) , (0,21) ,cv.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 2, cv.LINE_AA)
 			cv.imshow("match_minutiae_image" ,match_minutiae_image)
 			cv.waitKey()
+
 			if match_status : 
 				matching_score.append(score)
 			else : 
@@ -87,7 +101,7 @@ class Sequencing():
 		
 		return True , np.array(matching_score).mean()
 
-
+# As we have only 600 people fingerprint database
 def is_valid_user_id(user_id):
 	if user_id > 0 and user_id <= 600 :
 		return True
@@ -112,7 +126,8 @@ def register_user(users):
 
 	user_id = -1 
 	while is_user_exist(users , user_id) or not is_valid_user_id(user_id):
-		user_id = int(input("Enter user_id within range from 1 to 600 : "))
+		# user_id = int(input("Enter user_id within range from 1 to 600 : ").strip())
+		user_id = __input("Enter user_id within range from 1 to 600 : ")
 		if not is_valid_user_id(user_id):
 			print("Invalid User ID")
 		elif is_user_exist(users , user_id):
@@ -121,8 +136,13 @@ def register_user(users):
 	user = Sequencing(user_id)
 	print("Scan the Fingers one by one in order to create Fingerprint Sequencing Password")
 	user.print_fingerprint(user.get_user_fingerprint())
-	user.create_sequence()
+	print("Enter the User's Fingerprint's serial number in order which you want to Register as Sequence : ")
+	fingers = input(" Input : ").split()
+
+	user.create_sequence(fingers)
 	users.append(user)
+
+	print("Registration Successfull")
 
 def authentication(users):
 	print("=========================================================================================")
@@ -132,12 +152,14 @@ def authentication(users):
 	print("1. Easy")
 	print("2. Medium")
 	print("3. Hard")
-	difficult = int(input(" Choose : "))
+	# difficult = int(input(" Choose : ").strip())
+	difficult = __input(" Choose : ")
 
 	user_id = -1 
 	
 	while not is_user_exist(users , user_id) or not is_valid_user_id(user_id):
-		user_id = int(input("Enter user_id within range from 1 to 600 : "))
+		# user_id = int(input("Enter user_id within range from 1 to 600 : ").strip())
+		user_id = __input("Enter user_id within range from 1 to 600 : ")
 		if not is_valid_user_id(user_id):
 			print("Invalid User ID")
 		elif not is_user_exist(users , user_id):
@@ -150,7 +172,7 @@ def authentication(users):
 	user.print_fingerprint( user.get_altered_user_fingerprint(difficult) ) 
 	scanned_fingers = [ user.get_altered_user_fingerprint(difficult)[int(x)-1] for x in input(" Enter the registered fingerprint's sequence  : ").split() ]
 
-	access , score = user.authenticate_sequence(difficult , scanned_fingers)
+	access , score = user.authenticate_sequence( scanned_fingers , difficult)
 	debug_printout(access )
 	debug_printout(score)
 	if access :
@@ -159,9 +181,40 @@ def authentication(users):
 	else :
 		print("Access Denied. Please try again")
 
-def alternate():
-	print("Please choose a valid option from above")
+def update_sequence(users):
+	print("=========================================================================================")
+	print("=============================== SEQUENCE UPDATE PORTAL ==================================")
 	
+	user_id = -1 
+	
+	while not is_user_exist(users , user_id) or not is_valid_user_id(user_id):
+		# user_id = int(input("Enter user_id within range from 1 to 600 : ").strip())
+		user_id = __input("Enter user_id within range from 1 to 600 : ")
+		if not is_valid_user_id(user_id):
+			print("Invalid User ID")
+		elif not is_user_exist(users , user_id):
+			print("Does not exist")
+			return
+
+	user = find_user(users , user_id)
+    
+	print("Enter Previous Sequence")
+	user.print_fingerprint( user.get_altered_user_fingerprint(difficult =1) ) 
+	scanned_fingers = [ user.get_altered_user_fingerprint(difficult = 1)[int(x)-1] for x in input(" Enter the registered fingerprint's sequence  : ").split() ]
+
+	access , score = user.authenticate_sequence(scanned_fingers)
+	if not access :
+		print("Wrong Previous Sequence")
+		return
+	else :
+		print("Enter new Sequence")
+		user.print_fingerprint(user.get_user_fingerprint())
+		fingers = input(" Input : ").split()
+		user.create_sequence(fingers)
+		users.append(user)
+		print("Update Successfull")
+
+
 def menu(users):
 	while True:
 		
@@ -170,39 +223,37 @@ def menu(users):
 		print("Choose the option")
 		print("1. Register user")
 		print("2. Authentication")
-		print("3. Exit")
+		print("3. Update Sequence")
+		print("4. Exit")
 		
-		option = int(input(" Enter : "))
-		
+		# option = int(input(" Enter : ").strip())
+		option = __input(" Enter : ")
+
 		match option :
 			case 1: 
 				register_user(users)
 			case 2:
 				authentication(users)
 			case 3:
+				update_sequence(users)
+			case 4:
 				exit()
-	                case _:
-				alternate()
+			case _:
+				print("Please choose a valid option from above")
 
 
 def main():
-	# debug_printout( Sequencing.altered_easy_fingerprint )
-	# user = Sequencing(1)
-	# debug_printout( user.get_altered_user_fingerprint(1))
-	# debug_printout( Sequencing.altered_medium_fingerprint )
-	# debug_printout( Sequencing.altered_hard_fingerprint )
 	users = []
 	menu(users)
 	# fingerprint_Matcher('SOCOFing/Altered/Altered-Hard/151__M_Right_index_finger_Obl.BMP', 'SOCOFing/Real/151__M_Right_index_finger.BMP')
 
-# 546 , 
-# strip([chars])
 if __name__ == '__main__':
 	main()
 
 
-# x , y ,img = fingerprint_Matcher('SOCOFing/Altered/Altered-Hard/151__M_Right_index_finger_Obl.BMP', 'SOCOFing/Real/151__M_Right_index_finger.BMP')
 
-# img = cv.putText(img,str("1"),(0,21) ,cv.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 2, cv.LINE_AA)
-# cv.imshow("1" ,img)
-# cv.waitKey()
+
+
+# 546 , 
+ 
+# all(ele.isdigit() for ele in my_list)
