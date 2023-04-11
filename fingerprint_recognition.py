@@ -163,13 +163,13 @@ def fingerprint_Matcher(fingerprint1, fingerprint2):
     
     dists = np.sqrt(np.sum((tls1[:,np.newaxis,:] - tls2)**2, -1))
     dists /= (np.sqrt(np.sum(tls1**2, 1))[:,np.newaxis] + np.sqrt(np.sum(tls2**2, 1)))
-    num_p = 17
+    num_p = 5
     pairs = np.unravel_index(np.argpartition(dists, num_p, None)[:num_p], dists.shape)
     score = 1 - np.mean(dists[pairs[0], pairs[1]]) 
     print(f'Comparison score: {score:.2f}')
     
     match_minutiae_image = draw_match_pairs(tf1, tm1, tls1, tf2, tm2, tls2, fp1.ref_cell_coords, pairs,len(pairs[0])-1 , False)
-    if score > 0.40:
+    if score > 0.70:
         # print("Matched!")
         return  score , True , match_minutiae_image
     else:

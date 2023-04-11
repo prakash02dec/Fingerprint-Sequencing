@@ -1,4 +1,5 @@
-from fingerprint_recognition import *
+# from fingerprint_recognition import *
+from ml_based import *
 import numpy as np
 import cv2 as cv
 import os
@@ -94,9 +95,8 @@ class Sequencing():
 			cv.imshow("match_minutiae_image" ,match_minutiae_image)
 			cv.waitKey()
 
-			if match_status : 
-				matching_score.append(score)
-			else : 
+			matching_score.append(score)
+			if not match_status : 
 				return False , np.array(matching_score).mean()
 		
 		return True , np.array(matching_score).mean()
