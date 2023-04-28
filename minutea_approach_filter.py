@@ -20,6 +20,7 @@ for file in files:
         matplotlib.pyplot.close()
     except (ValueError , IndexError) as error:
         file_start = file.split('__')[0]
+        userID_deleted.append(file_start)
         filess =  list(filter(lambda fingerprint : fingerprint.split('__')[0] == file_start , files ))
         
         for file in filess:
@@ -41,3 +42,7 @@ for file in files:
         for file in filess:
             os.remove("SOCOFing/Altered/Altered-Hard/" + file)
             print(file)
+
+total_user_ID = 600
+
+# for user_id in userID_deleted :

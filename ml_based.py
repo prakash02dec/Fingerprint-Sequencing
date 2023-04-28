@@ -3,12 +3,12 @@ import cv2 as cv
 
 def fingerprint_Matcher(fingerprint1, fingerprint2):
     kp1 , kp2 , mp = None , None , None
-    sample = cv.imread(fingerprint1)
-    fingerprint_image = cv.imread(fingerprint2)
+    fingerprint1 = cv.imread(fingerprint1)
+    fingerprint2 = cv.imread(fingerprint2)
     sift = cv.SIFT_create()
 
-    keypoints_1 , descriptors_1 = sift.detectAndCompute(sample , None)
-    keypoints_2 , descriptors_2 = sift.detectAndCompute(fingerprint_image , None)
+    keypoints_1 , descriptors_1 = sift.detectAndCompute(fingerprint1 , None)
+    keypoints_2 , descriptors_2 = sift.detectAndCompute(fingerprint2 , None)
 
     matches = cv.FlannBasedMatcher({'algorithm':1 , 'trees' : 10} , {}).knnMatch(descriptors_1 , descriptors_2 ,k=2)
 
@@ -30,7 +30,7 @@ def fingerprint_Matcher(fingerprint1, fingerprint2):
 
     # print("SCORE: "+ str(score))
 
-    result = cv.drawMatches(sample , kp1 , fingerprint_image , kp2 , mp ,None)
+    result = cv.drawMatches(fingerprint1 , kp1 , fingerprint2 , kp2 , mp ,None)
     result = cv.resize(result ,None , fx=4 , fy=4)
     if score > 0.70:
         # print("Matched!")

@@ -1,5 +1,6 @@
 # from fingerprint_recognition import *
-from ml_based import *
+from cnn_based import *
+# from ml_based import *
 import numpy as np
 import cv2 as cv
 import os
@@ -47,20 +48,35 @@ class Sequencing():
 	def get_user_fingerprint(self,):
 		return self.user_fingerprint
 	
-	def get_altered_user_fingerprint(self , difficult):
-		match difficult:
-			case 0: # for debugging
-				fingerprints = list(filter(lambda fingerprint : int(fingerprint.split('__')[0]) == self.user_ID , Sequencing.real_fingerprint ))
-				return fingerprints
-			case 1:
-				fingerprints = list(filter(lambda fingerprint : int(fingerprint.split('__')[0]) == self.user_ID , Sequencing.altered_easy_fingerprint ))
-			case 2:
-				fingerprints = list(filter(lambda fingerprint : int(fingerprint.split('__')[0]) == self.user_ID , Sequencing.altered_medium_fingerprint))
-			case 3:
-				fingerprints = list(filter(lambda fingerprint : int(fingerprint.split('__')[0]) == self.user_ID , Sequencing.altered_hard_fingerprint ))
+	# def get_altered_user_fingerprint(self , difficult):
+	# 	match difficult:
+	# 		case 0: # for debugging
+	# 			fingerprints = list(filter(lambda fingerprint : int(fingerprint.split('__')[0]) == self.user_ID , Sequencing.real_fingerprint ))
+	# 			return fingerprints
+	# 		case 1:
+	# 			fingerprints = list(filter(lambda fingerprint : int(fingerprint.split('__')[0]) == self.user_ID , Sequencing.altered_easy_fingerprint ))
+	# 		case 2:
+	# 			fingerprints = list(filter(lambda fingerprint : int(fingerprint.split('__')[0]) == self.user_ID , Sequencing.altered_medium_fingerprint))
+	# 		case 3:
+	# 			fingerprints = list(filter(lambda fingerprint : int(fingerprint.split('__')[0]) == self.user_ID , Sequencing.altered_hard_fingerprint ))
 		
 
+	# 	return fingerprints
+
+	def get_altered_user_fingerprint(self, difficult):
+		if difficult == 0: # for debugging
+			fingerprints = list(filter(lambda fingerprint: int(fingerprint.split('__')[0]) == self.user_ID, Sequencing.real_fingerprint))
+		elif difficult == 1:
+			fingerprints = list(filter(lambda fingerprint: int(fingerprint.split('__')[0]) == self.user_ID, Sequencing.altered_easy_fingerprint))
+		elif difficult == 2:
+			fingerprints = list(filter(lambda fingerprint: int(fingerprint.split('__')[0]) == self.user_ID, Sequencing.altered_medium_fingerprint))
+		elif difficult == 3:
+			fingerprints = list(filter(lambda fingerprint: int(fingerprint.split('__')[0]) == self.user_ID, Sequencing.altered_hard_fingerprint))
+		else:
+			raise ValueError("Invalid difficulty level")
+
 		return fingerprints
+
 		
 
 	def get_sequence(self):
@@ -229,17 +245,28 @@ def menu(users):
 		# option = int(input(" Enter : ").strip())
 		option = __input(" Enter : ")
 
-		match option :
-			case 1: 
-				register_user(users)
-			case 2:
-				authentication(users)
-			case 3:
-				update_sequence(users)
-			case 4:
-				exit()
-			case _:
-				print("Please choose a valid option from above")
+		# match option :
+		# 	case 1: 
+		# 		register_user(users)
+		# 	case 2:
+		# 		authentication(users)
+		# 	case 3:
+		# 		update_sequence(users)
+		# 	case 4:
+		# 		exit()
+		# 	case _:
+		# 		print("Please choose a valid option from above")
+
+		if option == 1:
+			register_user(users)
+		elif option == 2:
+			authentication(users)
+		elif option == 3:
+			update_sequence(users)
+		elif option == 4:
+			exit()
+		else:
+			print("Please choose a valid option from above")
 
 
 def main():
@@ -251,9 +278,3 @@ if __name__ == '__main__':
 	main()
 
 
-
-
-
-# 546 , 
- 
-# all(ele.isdigit() for ele in my_list)
