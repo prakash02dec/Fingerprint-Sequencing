@@ -31,7 +31,7 @@ def fingerprint_Matcher(fingerprint1, fingerprint2):
     # print("SCORE: "+ str(score))
 
     result = cv.drawMatches(fingerprint1 , kp1 , fingerprint2 , kp2 , mp ,None)
-    result = cv.resize(result ,None , fx=4 , fy=4)
+    result = cv.resize(result ,None , fx=1 , fy=1)
     if score > 0.70:
         # print("Matched!")
         return  score , True , result

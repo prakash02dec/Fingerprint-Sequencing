@@ -214,6 +214,7 @@ def fingerprint_Matcher(fingerprint1, fingerprint2):
     pred_score = model.predict([fingerprint2, fingerprint1])
     is_match = (pred_score >= 0.7)
     match_image = np.concatenate((fingerprint1.squeeze(), fingerprint2.squeeze()), axis=1)
+    match_image = match_image*255
     
     return pred_score, is_match, match_image
 
