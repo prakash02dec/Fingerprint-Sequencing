@@ -1,5 +1,5 @@
-# from fingerprint_recognition import *
-from cnn_based import *
+from fingerprint_recognition import *
+# from cnn_based import *
 # from ml_based import *
 import numpy as np
 import cv2 as cv
@@ -89,10 +89,10 @@ class Sequencing():
 
 	def authenticate_sequence(self ,sequence , difficult=1):	
 		if len(sequence) != len(self.sequence):
-			return False , 0
+			return False , np.array([0])
 		
 		matching_score = []	
-		
+		os.mkdir('cache_match_images')
 		for fingerprint in range(len(self.sequence)):
 			
 			altered_difficulty_folder_loc = {
@@ -102,20 +102,25 @@ class Sequencing():
 										3 :	"SOCOFing/Altered/Altered-Hard/" ,
 										}
 			try:
-				score , match_status , match_minutiae_image  = fingerprint_Matcher('SOCOFing/Real/' + self.sequence[fingerprint] , altered_difficulty_folder_loc[ difficult ] + sequence[fingerprint] )
+				score , match_status , match_image  = fingerprint_Matcher('SOCOFing/Real/' + self.sequence[fingerprint] , altered_difficulty_folder_loc[ difficult ] + sequence[fingerprint] )
 			except ValueError:
 				cv.destroyAllWindows()
-				return False , 0 
+				return False , np.array([0])
 			
-			match_minutiae_image = cv.putText(match_minutiae_image , str(fingerprint+1) , (0,21) ,cv.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 2, cv.LINE_AA)
-			cv.imshow("match_minutiae_image" ,match_minutiae_image)
-			cv.waitKey()
+			match_image = cv.putText(match_image , str(fingerprint+1) , (0,21) ,cv.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 2, cv.LINE_AA)
+
+			# home_dir = os.path.expanduser('~')
+			output_path = os.path.join( 'cache_match_images', f"match_finger{str(fingerprint+1)}.png")
+			cv.imwrite(output_path, match_image)
+
+			# cv.imshow("match_image" ,match_image)
+			# cv.waitKey()
 
 			matching_score.append(score)
 			if not match_status : 
-				return False , np.array(matching_score).mean()
+				return False , np.array(matching_score)
 		
-		return True , np.array(matching_score).mean()
+		return True , np.array(matching_score)
 
 # As we have only 600 people fingerprint database
 def is_valid_user_id(user_id):
@@ -189,11 +194,12 @@ def authentication(users):
 	scanned_fingers = [ user.get_altered_user_fingerprint(difficult)[int(x)-1] for x in input(" Enter the registered fingerprint's sequence  : ").split() ]
 
 	access , score = user.authenticate_sequence( scanned_fingers , difficult)
-	debug_printout(access )
-	debug_printout(score)
+
+	os.rmdir('cache_match_images')
+
 	if access :
 		print("Access Success")
-		print(f"Overall Match Score : {score}")
+		print(f"Overall Match Score : {score.mean()}")
 	else :
 		print("Access Denied. Please try again")
 
@@ -217,7 +223,7 @@ def update_sequence(users):
 	print("Enter Previous Sequence")
 	user.print_fingerprint( user.get_altered_user_fingerprint(difficult =1) ) 
 	scanned_fingers = [ user.get_altered_user_fingerprint(difficult = 1)[int(x)-1] for x in input(" Enter the registered fingerprint's sequence  : ").split() ]
-
+	
 	access , score = user.authenticate_sequence(scanned_fingers)
 	if not access :
 		print("Wrong Previous Sequence")
