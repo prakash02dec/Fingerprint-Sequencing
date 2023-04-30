@@ -1,6 +1,6 @@
-from fingerprint_recognition import *
+# from fingerprint_recognition import *
 # from cnn_based import *
-# from ml_based import *
+from ml_based import *
 import numpy as np
 import cv2 as cv
 import os
