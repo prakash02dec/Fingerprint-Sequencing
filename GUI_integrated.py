@@ -20,10 +20,10 @@ def addButtons(altered_fingerprint_paths):
     """ Adds the right column in the authentication window that displays the altered versions of the selected fingerprint """
     buttons = [[sg.Text("Select the suitable altered version: ")]]
     if altered_fingerprint_paths[0]!= ' ':
-        CR_button = [sg.Button("Circular Rotated", image_filename = altered_fingerprint_paths[0], key = "CR")]
+        CR_button = [sg.Button("Central Rotation", image_filename = altered_fingerprint_paths[0], key = "CR")]
         buttons.append(CR_button)
     if altered_fingerprint_paths[1]!= ' ':
-        Obl_button = [sg.Button("Oblique", image_filename = altered_fingerprint_paths[1], key = "Obl")]
+        Obl_button = [sg.Button("Obliteration", image_filename = altered_fingerprint_paths[1], key = "Obl")]
         buttons.append(Obl_button)
     if altered_fingerprint_paths[2]!= ' ':
         Zcut_button = [sg.Button("Z - cut", image_filename = altered_fingerprint_paths[2], key = "Z")]
@@ -66,7 +66,7 @@ def altered_finger_image_paths(bmp_fingerprints, index):
     png_folder_name = "png_images"
     if not os.path.exists(png_folder_name):
         os.mkdir(png_folder_name)
-    directory_path = "SOCOFing\Altered\Altered-Easy"
+    directory_path = "SOCOFing\Altered\Altered-Hard"
     file_name = os.path.basename(real_user_print)
     base_name = os.path.splitext(file_name)[0]
     CR_file_name = base_name + "_CR.BMP"
@@ -90,7 +90,14 @@ def altered_finger_image_paths(bmp_fingerprints, index):
     return altered_paths_bmp, altered_paths_png
 
 def retrieve_scored_images():
-    pass
+    folder_path = "cache_match_images"
+    files = os.listdir(folder_path)
+    file_paths = []
+    for file in files:
+        file_path = os.path.join(folder_path, file)
+        if os.path.isfile(file_path):
+            file_paths.append(file_path)
+    return file_paths
 
 def window_start(users):   
     """ The primary menu """
@@ -103,6 +110,7 @@ def window_start(users):
                        [sg.Column([], key='-TEXT COLUMN-')]],
                element_justification="center")]]
     window = sg.Window("Fingerprint Sequencing Portal", layout, margins = (250, 80))
+    column = window.Element('-TEXT COLUMN-')
     while True:
         event, values = window.read()
         if event == "Register User":
@@ -114,33 +122,35 @@ def window_start(users):
                 user.sequence = password
                 users.append(user)
             text = [[sg.Text(f'Your registration has been successfully completed. User ID: {user.user_ID}')]]
-            column = window.Element('-TEXT COLUMN-')
             window.extend_layout(column, text)
         if event == "Authentication":
+            #window.FindElement(column).Update('')
             user = window_userID_authentication(users) 
             if user:
                 user_prints = fingerprint(user.user_ID)
                 fingerprint_paths, bmp_fingerprint_images = finger_image_paths(user_prints)
                 access, score = window_enterPassword(fingerprint_paths, bmp_fingerprint_images, user)
-                if access:
-                    window_resultsMatched(score)
-                else:
-                    window_resultsUnmatched(score)
+                shutil.rmtree("cache_match_images")
         if event == "Update Sequence":
-           user = window_userID_authentication(users)
-           if user:
-               user_prints = fingerprint(user.user_ID)
-               fingerprint_paths, bmp_fingerprint_images = finger_image_paths(user_prints)
-               access, score = window_enterPassword(fingerprint_paths, bmp_fingerprint_images, user)
-
-
+            user = window_userID_authentication(users)
+            if user:
+                user_prints = fingerprint(user.user_ID)
+                fingerprint_paths, bmp_fingerprint_images = finger_image_paths(user_prints)
+                access, score = window_enterPassword(fingerprint_paths, bmp_fingerprint_images, user)
+                shutil.rmtree("cache_match_images")
+                if access:
+                    password = window_setPassword(fingerprint_images, bmp_fingerprint_images)
+                    user.sequence = password
+                else:
+                    window_resultsUnmatched()
+                    continue
         if event == sg.WIN_CLOSED or event =="Close":
             break
     #return password, entered_password
 
 def window_userID_registration(users):         
     """The window to obtain the users' ID"""                                               
-    layout = [[sg.Text("Enter your user ID, from 1 to 600: ", size = (40,2))], 
+    layout = [[sg.Text("Enter your user ID, from 1 to 424: ", size = (40,2))], 
               [sg.InputText()],
               [sg.Button("OK"), sg.Button("Close")],
               [sg.Column([], key='-TEXT COLUMN-')]]
@@ -167,7 +177,7 @@ def window_userID_registration(users):
 
 def window_userID_authentication(users):         
     """The window to obtain the users' ID"""                                               
-    layout = [[sg.Text("Enter your user ID, from 1 to 600: ", size = (40,2))], 
+    layout = [[sg.Text("Enter your user ID, from 1 to 424: ", size = (40,2))], 
               [sg.InputText()],
               [sg.Button("OK"), sg.Button("Close")],
               [sg.Column([], key='-TEXT COLUMN-')]]
@@ -261,8 +271,9 @@ def window_enterPassword(userfingerprints, bmp_fingerprints, user):
             break
         if event == "Submit":
             access, score = user.authenticate_sequence(seq)
+            png_fingerprints = retrieve_scored_images()
+            window_fingerprintProcessing(png_fingerprints, score, access)
             break
-            # window_fingerprintProcessing(bmp_fingerprints, seq)
         if event in fingers:
             altered_paths_bmp, altered_paths_png = altered_finger_image_paths(bmp_fingerprints,fingers.index(event))
             new_buttons = addButtons(altered_paths_png)
@@ -318,31 +329,38 @@ def window_enterPassword(userfingerprints, bmp_fingerprints, user):
     window.close()
     return access, score
 
-def window_updatePassword(userfingerprints):
-    pass
-
-def window_fingerprintProcessing(Enteredpassword, imagelist, scores):      
+def window_fingerprintProcessing(Imagelist, scores, access):      
     """Will display the different images from backend"""
     images = []
-    for i in range(len(imagelist)):
-        images.append([sg.Image(imagelist[i])])
-        images.append([sg.Text(scores[i])])
+    text = []
+    for i in range(len(Imagelist)):
+        images.append(sg.Image(Imagelist[i]))
+        text.append(sg.Text("Score of finger: \n"+str(scores[i])+"\t\t"))
+    print(images)
     final_score = np.mean(scores)
     Center_column = [[sg.Text("Matching Fingerprints...")],
-                     [images],
-                     [sg.Text(final_score, justification = "centre")]]          
-    layout = [[sg.Column(Center_column, key = "center_col", size=(350, 350), scrollable = True, vertical_scroll_only = True)]]
+                     images,
+                     text,
+                     [sg.Text("The final score is: "+str(final_score), justification = "centre")],
+                     [sg.Button("Close")]]          
+    layout = [[sg.Column(Center_column, key = "center_col", size=(350, 200), scrollable = True, vertical_scroll_only = False)]]
     window = sg.Window("Fingerprint Matching", layout)
     while True:
         event, values = window.read()
-        if event == sg.WIN_CLOSED:
+        if event == sg.WIN_CLOSED or 'Close':
             break
     window.close()
+    if access:
+        window_resultsMatched(scores)
+    else:
+        window_resultsUnmatched(scores)
 
-def window_resultsMatched():
+def window_resultsMatched(scores):
     """Need to get results from backend"""
+    final_score = np.mean(scores)
     layout = [[sg.Text("FINGERPRINTS MATCHED")],
               [sg.Text("Successfully Authenticated")],
+              [sg.Text("Final match score: "+str(final_score))],
               [sg.Button("Close")]]
     window = sg.Window("Success", layout, margins=(150,80))
     while True: 
@@ -351,10 +369,12 @@ def window_resultsMatched():
             break
     window.close()
 
-def window_resultsUnmatched():
+def window_resultsUnmatched(scores):
     """Results from backend"""
+    final_score = np.mean(scores)
     layout = [[sg.Text("FINGERPRINTS DO NOT MATCH")],
               [sg.Text("Authentication Failed")],
+              [sg.Text("Final match score: "+str(final_score))],
               [sg.Button("Close")]]
     window = sg.Window("Failure", layout, margins=(150,80))
     while True: 
